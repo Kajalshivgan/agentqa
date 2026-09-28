@@ -1,0 +1,254 @@
+{
+  "name": "display_search_demo",
+  "device": "emulator-5554",
+  "screen": [
+    1408,
+    792
+  ],
+  "recorded_at": "2026-09-27T12:11:11+00:00",
+  "start_package": "com.android.car.settings",
+  "actions": [
+    {
+      "action": "tap",
+      "x": 250,
+      "y": 603,
+      "locator_type": "text",
+      "locator_value": "Display",
+      "unique": true,
+      "element": {
+        "class": "android.widget.TextView",
+        "resource_id": "android:id/title",
+        "text": "Display",
+        "content_desc": ""
+      },
+      "screen_before": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Bluetooth toggle switch",
+        "Use Bluetooth",
+        "Visible as Car Emulator to other devices",
+        "Pair new device"
+      ],
+      "package": "com.android.car.settings",
+      "screen_after": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Bluetooth toggle switch",
+        "Use Bluetooth",
+        "Visible as Car Emulator to other devices",
+        "Pair new device"
+      ]
+    },
+    {
+      "action": "tap",
+      "x": 244,
+      "y": 507,
+      "locator_type": "text",
+      "locator_value": "Sound",
+      "unique": true,
+      "element": {
+        "class": "android.widget.TextView",
+        "resource_id": "android:id/title",
+        "text": "Sound",
+        "content_desc": ""
+      },
+      "screen_before": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Bluetooth toggle switch",
+        "Use Bluetooth",
+        "Visible as Car Emulator to other devices",
+        "Pair new device"
+      ],
+      "package": "com.android.car.settings",
+      "warning": "stale_snapshot: acted before the UI was re-captured; verify this step",
+      "screen_after": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Play media on",
+        "Car on x86_64 emulator",
+        "Media volume",
+        "Navigation volume",
+        "In-call volume"
+      ]
+    },
+    {
+      "action": "tap",
+      "x": 480,
+      "y": 603,
+      "locator_type": "text",
+      "locator_value": "Display",
+      "unique": true,
+      "element": {
+        "class": "android.widget.TextView",
+        "resource_id": "android:id/title",
+        "text": "Display",
+        "content_desc": ""
+      },
+      "screen_before": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Play media on",
+        "Car on x86_64 emulator",
+        "Media volume",
+        "Navigation volume",
+        "In-call volume"
+      ],
+      "package": "com.android.car.settings",
+      "screen_after": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Brightness level",
+        "Adaptive brightness",
+        "Adjust screen brightness to environment",
+        "Date & time",
+        "Calm mode"
+      ]
+    },
+    {
+      "action": "tap",
+      "x": 432,
+      "y": 124,
+      "locator_type": "desc",
+      "locator_value": "Search",
+      "unique": true,
+      "element": {
+        "class": "android.widget.FrameLayout",
+        "resource_id": "",
+        "text": "",
+        "content_desc": "Search"
+      },
+      "screen_before": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Brightness level",
+        "Adaptive brightness",
+        "Adjust screen brightness to environment",
+        "Date & time",
+        "Calm mode"
+      ],
+      "package": "com.android.car.settings",
+      "screen_after": [
+        "Brightness level",
+        "Display",
+        "Adaptive brightness",
+        "Scroll up",
+        "Scroll down",
+        "Back",
+        "brightness"
+      ]
+    },
+    {
+      "action": "input_text",
+      "text": "brightness",
+      "resource_id": "com.chassis.car.ui.plugin:id/car_ui_toolbar_search_bar",
+      "screen_after": [
+        "Brightness level",
+        "Display",
+        "Adaptive brightness",
+        "Scroll up",
+        "Scroll down",
+        "Back",
+        "brightness"
+      ]
+    },
+    {
+      "action": "tap",
+      "x": 346,
+      "y": 327,
+      "locator_type": "text",
+      "locator_value": "Adaptive brightness",
+      "unique": true,
+      "element": {
+        "class": "android.widget.TextView",
+        "resource_id": "android:id/title",
+        "text": "Adaptive brightness",
+        "content_desc": ""
+      },
+      "screen_before": [
+        "Brightness level",
+        "Display",
+        "Adaptive brightness",
+        "Scroll up",
+        "Scroll down",
+        "Back",
+        "brightness"
+      ],
+      "package": "com.android.settings.intelligence",
+      "screen_after": [
+        "Connected devices",
+        "Network & internet",
+        "Notifications",
+        "Sound",
+        "Display",
+        "Profiles & accounts",
+        "Scroll up",
+        "Scroll down",
+        "Settings",
+        "Search",
+        "Brightness level",
+        "Adaptive brightness",
+        "Adjust screen brightness to environment",
+        "Date & time",
+        "Calm mode",
+        "Back"
+      ]
+    }
+  ]
+}

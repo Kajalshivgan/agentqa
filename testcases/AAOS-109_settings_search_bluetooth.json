@@ -1,0 +1,53 @@
+{
+  "key": "AAOS-109",
+  "issueType": "Test",
+  "summary": "Verify Settings search returns Bluetooth result",
+  "description": "Regression test for the Settings app search field. Confirms typing 'bluetooth' surfaces the Bluetooth settings entry as a search result.",
+  "priority": "Medium",
+  "labels": ["android-auto", "settings", "search", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Tap on search field",
+      "testData": "",
+      "expectedResult": "Search field gains focus and on-screen keyboard opens"
+    },
+    {
+      "step": 3,
+      "action": "Input text",
+      "testData": "bluetooth",
+      "expectedResult": "Search field shows the typed text 'bluetooth'"
+    },
+    {
+      "step": 4,
+      "action": "Assert visible 'Bluetooth'",
+      "testData": "",
+      "expectedResult": "'Bluetooth' appears as a search result"
+    },
+    {
+      "step": 5,
+      "action": "Tap on 'Bluetooth' search result",
+      "testData": "",
+      "expectedResult": "Connected devices / Bluetooth settings screen opens"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

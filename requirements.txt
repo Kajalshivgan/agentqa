@@ -1,0 +1,7 @@
+robotframework>=7.0
+anthropic>=1.0
+pytest>=8.0
+opencv-python-headless>=4.9   # template matching (Assert Image Visible / Tap On Image)
+Pillow>=10.0                  # visual regression (Assert Screenshot Matches)
+# Added when the orchestration layer is built:
+# langgraph

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+results/
+output.xml
+log.html
+report.html
+*.png
+recordings/*.json
+!recordings/examples/*.json
+# template/baseline images are part of the test suite, not run output
+!templates/*.png
+!baselines/*.png
+
+# secrets
+.env

@@ -1,0 +1,108 @@
+add device 1: /dev/input/event0
+  name:     "Power Button"
+add device 2: /dev/input/event1
+  name:     "AT Translated Set 2 keyboard"
+add device 3: /dev/input/event2
+  name:     "virtio_input_multi_touch_1"
+add device 4: /dev/input/event3
+  name:     "virtio_input_multi_touch_2"
+add device 5: /dev/input/event4
+  name:     "virtio_input_multi_touch_3"
+add device 6: /dev/input/event5
+  name:     "virtio_input_multi_touch_4"
+add device 7: /dev/input/event6
+  name:     "virtio_input_multi_touch_5"
+add device 8: /dev/input/event7
+  name:     "virtio_input_multi_touch_6"
+add device 9: /dev/input/event8
+  name:     "virtio_input_multi_touch_7"
+add device 10: /dev/input/event9
+  name:     "virtio_input_multi_touch_8"
+add device 11: /dev/input/event10
+  name:     "virtio_input_multi_touch_9"
+add device 12: /dev/input/event11
+  name:     "virtio_input_multi_touch_10"
+add device 13: /dev/input/event12
+  name:     "virtio_input_multi_touch_11"
+add device 14: /dev/input/event13
+  name:     "qwerty2"
+[    1023.107228] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   00000000
+[    1023.107228] /dev/input/event2: EV_ABS       ABS_MT_POSITION_X    000016ba
+[    1023.107228] /dev/input/event2: EV_ABS       ABS_MT_POSITION_Y    0000619c
+[    1023.107228] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000400
+[    1023.107228] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1023.262785] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000000
+[    1023.262785] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   ffffffff
+[    1023.262785] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1027.289473] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   00000000
+[    1027.289473] /dev/input/event2: EV_ABS       ABS_MT_POSITION_X    0000162e
+[    1027.289473] /dev/input/event2: EV_ABS       ABS_MT_POSITION_Y    00005219
+[    1027.289473] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000400
+[    1027.289473] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1027.451698] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000000
+[    1027.451698] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   ffffffff
+[    1027.451698] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1031.489198] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   00000000
+[    1031.489198] /dev/input/event2: EV_ABS       ABS_MT_POSITION_X    00002ba2
+[    1031.489198] /dev/input/event2: EV_ABS       ABS_MT_POSITION_Y    0000619c
+[    1031.489198] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000400
+[    1031.489198] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1031.612127] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000000
+[    1031.612127] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   ffffffff
+[    1031.612127] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1035.652074] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   00000000
+[    1035.652074] /dev/input/event2: EV_ABS       ABS_MT_POSITION_X    00002745
+[    1035.652074] /dev/input/event2: EV_ABS       ABS_MT_POSITION_Y    0000140a
+[    1035.652074] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000400
+[    1035.652074] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1035.790696] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000000
+[    1035.790696] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   ffffffff
+[    1035.790696] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1039.827955] /dev/input/event13: EV_KEY       KEY_B                DOWN
+[    1039.827955] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828074] /dev/input/event13: EV_KEY       KEY_B                UP
+[    1039.828074] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828209] /dev/input/event13: EV_KEY       KEY_R                DOWN
+[    1039.828209] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828229] /dev/input/event13: EV_KEY       KEY_R                UP
+[    1039.828229] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828242] /dev/input/event13: EV_KEY       KEY_I                DOWN
+[    1039.828242] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828256] /dev/input/event13: EV_KEY       KEY_I                UP
+[    1039.828256] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828263] /dev/input/event13: EV_KEY       KEY_G                DOWN
+[    1039.828263] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828271] /dev/input/event13: EV_KEY       KEY_G                UP
+[    1039.828271] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828278] /dev/input/event13: EV_KEY       KEY_H                DOWN
+[    1039.828278] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828284] /dev/input/event13: EV_KEY       KEY_H                UP
+[    1039.828284] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828291] /dev/input/event13: EV_KEY       KEY_T                DOWN
+[    1039.828291] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828297] /dev/input/event13: EV_KEY       KEY_T                UP
+[    1039.828297] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828304] /dev/input/event13: EV_KEY       KEY_N                DOWN
+[    1039.828304] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828310] /dev/input/event13: EV_KEY       KEY_N                UP
+[    1039.828310] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828316] /dev/input/event13: EV_KEY       KEY_E                DOWN
+[    1039.828316] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828323] /dev/input/event13: EV_KEY       KEY_E                UP
+[    1039.828323] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828330] /dev/input/event13: EV_KEY       KEY_S                DOWN
+[    1039.828330] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828336] /dev/input/event13: EV_KEY       KEY_S                UP
+[    1039.828336] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828343] /dev/input/event13: EV_KEY       KEY_S                DOWN
+[    1039.828343] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1039.828407] /dev/input/event13: EV_KEY       KEY_S                UP
+[    1039.828407] /dev/input/event13: EV_SYN       SYN_REPORT           00000000
+[    1045.993751] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   00000000
+[    1045.993751] /dev/input/event2: EV_ABS       ABS_MT_POSITION_X    00001f74
+[    1045.993751] /dev/input/event2: EV_ABS       ABS_MT_POSITION_Y    000034d8
+[    1045.993751] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000400
+[    1045.993751] /dev/input/event2: EV_SYN       SYN_REPORT           00000000
+[    1046.141816] /dev/input/event2: EV_ABS       ABS_MT_PRESSURE      00000000
+[    1046.141816] /dev/input/event2: EV_ABS       ABS_MT_TRACKING_ID   ffffffff
+[    1046.141816] /dev/input/event2: EV_SYN       SYN_REPORT           00000000

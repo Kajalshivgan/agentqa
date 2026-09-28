@@ -1,0 +1,54 @@
+{
+  "key": "AAOS-108",
+  "issueType": "Test",
+  "summary": "Verify System languages screen lists selectable languages",
+  "description": "Regression test for Language & input settings. Confirms the languages list opens and shows the current system language.",
+  "priority": "Low",
+  "labels": ["android-auto", "settings", "language", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed",
+    "System language is set to English (United States)"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Scroll to text 'System'",
+      "testData": "direction=down",
+      "expectedResult": "'System' entry becomes visible in the list"
+    },
+    {
+      "step": 3,
+      "action": "Tap on 'System'",
+      "testData": "",
+      "expectedResult": "System settings screen opens"
+    },
+    {
+      "step": 4,
+      "action": "Tap on 'Languages & input'",
+      "testData": "",
+      "expectedResult": "Languages & input screen opens"
+    },
+    {
+      "step": 5,
+      "action": "Tap on 'Languages'",
+      "testData": "",
+      "expectedResult": "Languages screen opens and 'English (United States)' is visible"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

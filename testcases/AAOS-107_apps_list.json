@@ -1,0 +1,41 @@
+{
+  "key": "AAOS-107",
+  "issueType": "Test",
+  "summary": "Verify Apps settings shows list of installed applications",
+  "description": "Regression test confirming the Apps & notifications screen lists installed apps, including the Settings app itself.",
+  "priority": "Medium",
+  "labels": ["android-auto", "settings", "apps", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Tap on 'Apps'",
+      "testData": "",
+      "expectedResult": "Apps screen opens showing a list of installed applications"
+    },
+    {
+      "step": 3,
+      "action": "Assert visible 'Settings'",
+      "testData": "",
+      "expectedResult": "'Settings' entry is present in the installed apps list"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

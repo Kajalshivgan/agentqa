@@ -1,0 +1,48 @@
+{
+  "key": "AAOS-105",
+  "issueType": "Test",
+  "summary": "Verify Display theme can be switched to Dark",
+  "description": "Regression test confirming the Display settings 'Dark theme' option can be enabled and the selection is reflected in the UI.",
+  "priority": "Low",
+  "labels": ["android-auto", "settings", "display", "theme", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed",
+    "Dark theme is currently disabled"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Tap on 'Display'",
+      "testData": "",
+      "expectedResult": "Display settings screen opens"
+    },
+    {
+      "step": 3,
+      "action": "Tap on 'Dark theme'",
+      "testData": "",
+      "expectedResult": "Dark theme toggle switches to the On position"
+    },
+    {
+      "step": 4,
+      "action": "Take screenshot",
+      "testData": "",
+      "expectedResult": "Background and system bars render in dark colors"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

@@ -1,0 +1,53 @@
+{
+  "key": "AAOS-111",
+  "issueType": "Test",
+  "summary": "Verify About screen shows Android version information",
+  "description": "Regression test for System > About. Confirms the About screen is reachable and displays the Android version field.",
+  "priority": "Low",
+  "labels": ["android-auto", "settings", "about", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Scroll to text 'System'",
+      "testData": "direction=down",
+      "expectedResult": "'System' entry becomes visible in the list"
+    },
+    {
+      "step": 3,
+      "action": "Tap on 'System'",
+      "testData": "",
+      "expectedResult": "System settings screen opens"
+    },
+    {
+      "step": 4,
+      "action": "Tap on 'About'",
+      "testData": "",
+      "expectedResult": "About screen opens"
+    },
+    {
+      "step": 5,
+      "action": "Assert visible 'Android version'",
+      "testData": "",
+      "expectedResult": "'Android version' field and its value are visible"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

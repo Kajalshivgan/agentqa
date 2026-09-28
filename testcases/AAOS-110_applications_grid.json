@@ -1,0 +1,42 @@
+{
+  "key": "AAOS-110",
+  "issueType": "Test",
+  "summary": "Verify Applications grid opens from the home screen",
+  "description": "Regression test confirming the app-grid launcher icon on the home screen opens the Applications grid, using an image-based locator since the icon has no accessibility text.",
+  "priority": "High",
+  "labels": ["android-auto", "launcher", "image-verification", "regression"],
+  "components": ["Home Launcher"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Home screen is the active screen",
+    "Reference template 'apps_grid_icon' has been captured via capture-template"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Press Home",
+      "testData": "",
+      "expectedResult": "Home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Tap on image",
+      "testData": "apps_grid_icon threshold=0.8",
+      "expectedResult": "Applications grid opens showing installed app icons"
+    },
+    {
+      "step": 3,
+      "action": "Assert visible 'Applications'",
+      "testData": "",
+      "expectedResult": "Applications screen title/content is visible"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "Home Launcher",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": ["templates/apps_grid_icon.png"]
+}

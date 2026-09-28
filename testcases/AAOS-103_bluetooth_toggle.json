@@ -1,0 +1,49 @@
+{
+  "key": "AAOS-103",
+  "issueType": "Test",
+  "summary": "Verify Bluetooth can be toggled on from Connected devices settings",
+  "description": "Regression test for the Bluetooth toggle in Connected devices settings. Confirms the toggle switches state and the 'On' status text appears. Requires real hardware; not exercised on the AAOS emulator.",
+  "priority": "High",
+  "labels": ["android-auto", "settings", "bluetooth", "regression", "hardware-required"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed",
+    "Bluetooth is currently off",
+    "Test executed on real head unit hardware (Bluetooth radio unavailable on AAOS emulator)"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Tap on 'Connected devices'",
+      "testData": "",
+      "expectedResult": "Connected devices screen opens showing a 'Bluetooth' toggle"
+    },
+    {
+      "step": 3,
+      "action": "Tap on 'Bluetooth' toggle",
+      "testData": "",
+      "expectedResult": "Toggle switches to the On position"
+    },
+    {
+      "step": 4,
+      "action": "Assert visible 'On'",
+      "testData": "",
+      "expectedResult": "Bluetooth status text reads 'On'"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Real head unit (Bluetooth hardware required)"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

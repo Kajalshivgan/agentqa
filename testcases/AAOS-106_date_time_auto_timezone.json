@@ -1,0 +1,47 @@
+{
+  "key": "AAOS-106",
+  "issueType": "Test",
+  "summary": "Verify 'Set time zone automatically' toggle is visible in Date & time settings",
+  "description": "Regression test for the Date & time settings screen. Confirms the automatic time zone toggle is present and reachable from Settings home.",
+  "priority": "Low",
+  "labels": ["android-auto", "settings", "date-time", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Scroll to text 'Date & time'",
+      "testData": "direction=down",
+      "expectedResult": "'Date & time' entry becomes visible in the list"
+    },
+    {
+      "step": 3,
+      "action": "Tap on 'Date & time'",
+      "testData": "",
+      "expectedResult": "Date & time settings screen opens"
+    },
+    {
+      "step": 4,
+      "action": "Assert visible 'Set time zone automatically'",
+      "testData": "",
+      "expectedResult": "Automatic time zone toggle is present on screen"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}

@@ -1,0 +1,41 @@
+{
+  "key": "AAOS-102",
+  "issueType": "Test",
+  "summary": "Verify Media volume slider is visible in Sound settings",
+  "description": "Regression test for the Sound settings screen. Confirms the Media volume slider is reachable and rendered from Settings home.",
+  "priority": "Medium",
+  "labels": ["android-auto", "settings", "sound", "regression"],
+  "components": ["Settings App"],
+  "status": "To Do",
+  "preconditions": [
+    "Device/emulator is powered on and unlocked",
+    "Settings app (com.android.car.settings) is installed"
+  ],
+  "testSteps": [
+    {
+      "step": 1,
+      "action": "Launch the Settings app",
+      "testData": "com.android.car.settings",
+      "expectedResult": "Settings home screen is displayed"
+    },
+    {
+      "step": 2,
+      "action": "Tap on 'Sound'",
+      "testData": "",
+      "expectedResult": "Sound settings screen opens and 'Media volume' is visible"
+    },
+    {
+      "step": 3,
+      "action": "Assert visible 'Media volume'",
+      "testData": "",
+      "expectedResult": "Media volume slider control is present on screen"
+    }
+  ],
+  "environment": {
+    "platform": "Android Automotive OS",
+    "app": "com.android.car.settings",
+    "device": "Automotive_1408p_landscape (emulator) or real head unit"
+  },
+  "linkedIssues": [],
+  "attachments": []
+}
