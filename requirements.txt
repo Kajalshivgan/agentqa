@@ -7,5 +7,4 @@ Pillow>=10.0                  # visual regression (Assert Screenshot Matches)
 edge-tts>=6.1                 # speech testing: free text-to-speech (needs internet)
 sounddevice>=0.4              # speech testing: play audio on a chosen output device
 soundfile>=0.12               # speech testing: decode the MP3 (bundles libsndfile with MP3 support)
-# Added when the orchestration layer is built:
-# langgraph
+langgraph>=0.2                 # multi-agent orchestration (orchestrator.py)

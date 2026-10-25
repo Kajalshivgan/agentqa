@@ -2,7 +2,7 @@
 
 > A custom, dependency-light UI automation engine (Python + Robot Framework) combined with an AI multi-agent layer that records, plans, executes, triages, and reports regression tests automatically. Built for Android-based infotainment and industrial touchscreen systems.
 
-**Status:** Phase 1 (core engine + Recorder Agent, Approach A) is implemented and verified on an Android Automotive OS emulator. The Planner, Executor, Triage and Reporter agents are next. See the [Roadmap](#roadmap).
+**Status:** Phase 1 (core engine + Recorder Agent, Approach A) is implemented and verified on an Android Automotive OS emulator. The Planner, Executor, Triage and Reporter agents are implemented and wired with LangGraph (`orchestrator.py`), and SOME/IP keywords are available; both are unit-tested but not yet run end to end on an emulator. See the [Roadmap](#roadmap).
 
 ## Highlights
 
@@ -12,8 +12,8 @@
 - **ADB / UIAutomator automation engine** packaged as a Robot Framework library, with OpenCV image checks (template matching, visual regression) *(implemented)*
 - **Claude-powered Recorder Agent** that converts manual device flows into validated Robot Framework tests, with a rule-based fallback and an optional local LLM via Ollama *(implemented)*
 - **Speech-driven tests**: text-to-speech played to the device, verified with the same keywords *(library done, phone run pending)*
-- **SOME/IP integration** (COVESA vsomeip) so a single Robot test drives both the HMI and the ECU *(planned)*
-- **LangGraph multi-agent orchestration** (Planner, Executor, Triage, Reporter) for automated failure classification *(in design)*
+- **SOME/IP integration** (COVESA vsomeip) so a single Robot test drives both the HMI and the ECU *(implemented: SOME/IP wire protocol over UDP/TCP; service discovery not included; tested against a simulated ECU)*
+- **LangGraph multi-agent orchestration** (Planner, Executor, Triage, Reporter) with retry loop, failure classification and a SQLite flakiness history *(implemented, run with `python orchestrator.py`)*
 
 ---
 
@@ -335,12 +335,17 @@ For a head unit, the speaker-to-mic gap can be replaced by a wired path: a USB a
 | Agent | Status | Role | Key Inputs | Key Outputs |
 |---|---|---|---|---|
 | **Recorder** | ✅ Approach A | Captures live device interactions and converts them into a structured action log | Raw touch events (A) or Accessibility Service events (B) | `recordings/*.json`, generated `.robot` file |
-| **Planner** | Planned | Decides what to test based on what changed | Requirements doc / changelog, existing test repo | New/updated `.robot` test files |
-| **Executor** | Planned | Runs the test suite via the custom engine | `.robot` files | `output.xml`, logs, screenshots |
-| **Triage** | Planned | Reasons about *why* a test failed | Failure logs, screenshots, flakiness history (SQLite) | Classification: regression / flaky / environment |
-| **Reporter** | Planned | Produces a human-readable output | Triage results | Bug report draft / run summary |
+| **Planner** | ✅ Keyword matching | Decides what to test based on what changed | Requirements doc / changelog, existing test repo | New/updated `.robot` test files |
+| **Executor** | ✅ | Runs the test suite via the custom engine | `.robot` files | `output.xml`, logs, screenshots |
+| **Triage** | ✅ Rule-based + SQLite | Reasons about *why* a test failed | Failure logs, screenshots, flakiness history (SQLite) | Classification: regression / flaky / environment |
+| **Reporter** | ✅ Markdown | Produces a human-readable output | Triage results | Bug report draft / run summary |
 
-The agents will be orchestrated as a **LangGraph** state machine, which gives explicit control over the retry and branching logic in the architecture diagram above.
+The agents are orchestrated as a **LangGraph** state machine (`orchestrator.py`): `planner -> executor -> triage -> (executor retry | reporter)`.
+
+- **Planner** matches the changelog against suite names, docs, test names and tags (no changelog = full regression).
+- **Executor** runs suites through the same runner as the MCP server.
+- **Triage** treats adb/emulator/connection errors as *environment* (not retried), re-runs other failures, and labels a test *flaky* if it passes on retry or *regression* if it keeps failing. Outcomes go to `results/flakiness.db`, which gives a per-test flake rate.
+- **Reporter** writes `results/report.md` with a bug-report draft per regression. LLM-based triage and JIRA filing are still on the Roadmap.
 
 ---
 
@@ -472,18 +477,20 @@ project_1/
 │   ├── wait.py                # Polling / retry logic
 │   ├── image_match.py         # Template matching + visual-regression diffing
 │   ├── speech.py              # edge-tts synthesis + cache, audio playback
+│   ├── someip.py              # SOME/IP header + UDP/TCP request/response client
+│   ├── SomeIpLibrary.py       # Robot Framework keywords: Send SomeIP Request, ...
 │   ├── SpeechLibrary.py       # Robot Framework keywords: Speak, Speak Command, ...
 │   └── MobileUILibrary.py     # Robot Framework keyword library
 ├── agents/
+│   ├── planner_agent.py       # changelog -> suites
+│   ├── executor_agent.py      # runs suites
+│   ├── triage_agent.py        # regression / flaky / environment + SQLite history
+│   ├── reporter_agent.py      # Markdown run summary
 │   ├── recorder/
 │   │   ├── gestures.py        # getevent parser + tap/long-press/swipe/key tracker
 │   │   ├── session.py         # capture loop, pre-touch UI snapshots, action log
 │   │   └── generator.py       # rule-based + Claude .robot generation, validation
 │   ├── recorder_agent.py      # CLI: record / generate / inspect
-│   ├── planner_agent.py       # (planned)
-│   ├── executor_agent.py      # (planned)
-│   ├── triage_agent.py        # (planned)
-│   └── reporter_agent.py      # (planned)
 ├── android/                   # (planned) Approach B Accessibility Service, Android Studio project
 ├── recordings/                # captured action logs (*.json) + raw getevent streams
 │   └── examples/              # verified example recording
@@ -496,7 +503,7 @@ project_1/
 ├── tests/
 │   ├── robot/                 # generated / maintained .robot suites
 │   └── unit/                  # pytest unit tests + fixtures
-├── orchestrator.py            # (planned) LangGraph graph wiring the agents
+├── orchestrator.py            # LangGraph graph wiring the agents
 ├── requirements.txt
 └── README.md
 ```
@@ -577,10 +584,12 @@ robot --pythonpath . --outputdir results tests/robot/display_settings.robot
 # optionally: --variable DEVICE:emulator-5554
 ```
 
-**Run the full agent pipeline (planned):**
+**Run the full agent pipeline (Planner, Executor, Triage, Reporter):**
 ```bash
 python orchestrator.py --changelog changelog.md --device emulator-5554
 ```
+
+**Drive the ECU and the HMI from one test (SOME/IP):** see `tests/robot/someip_hmi_ecu.robot`. Keywords: `Connect To SomeIP Service`, `Send SomeIP Request`, `Send SomeIP Request And Expect`, `Send SomeIP Fire And Forget`, `Wait For SomeIP Notification`. `engine/someip.py` implements the SOME/IP wire format directly (unicast, UDP or TCP) so it can talk to a COVESA vsomeip application on the ECU; SOME/IP-SD is not implemented, so address, service id and method id are given explicitly.
 
 ---
 
@@ -619,9 +628,9 @@ It records the scripted flow in `tools/simulate_user.py`, generates a test, and 
 - [x] Image verification: template matching (`Assert Image Visible` / `Tap On Image`) and visual regression (`Assert Screenshot Matches`), backed by OpenCV + Pillow
 - [x] MCP server exposing Robot Framework (discover, validate, write, run, inspect) to AI agents
 - [~] Speech testing proof of concept (library done; phone run pending): `SpeechLibrary` (edge-tts + PC speaker) on an Android phone, English only; later a wired path to real automotive hardware
-- [ ] Planner, Executor, Triage, Reporter agents wired with LangGraph
-- [ ] SOME/IP integration (COVESA vsomeip): Robot keywords that send/receive ECU messages, so one test drives the HMI and the ECU
-- [ ] Flakiness-history database (SQLite) feeding the Triage Agent
+- [x] Planner, Executor, Triage, Reporter agents wired with LangGraph (LLM-based triage still to do)
+- [x] SOME/IP keywords (`SomeIpLibrary`): one test drives the HMI and the ECU. Still to do: SOME/IP-SD, and a run against a real vsomeip service
+- [x] Flakiness-history database (SQLite); feeding it into triage decisions is still to do
 - [ ] Benchmark v1 vs v2 latency and fill in the table above
 - [ ] Recorder Agent — Approach B (companion Accessibility Service, Android Studio / Kotlin)
 - [ ] Persistent on-device instrumentation service (reuses the Approach B APK; replaces per-action `adb shell` spawning)
