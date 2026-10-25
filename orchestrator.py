@@ -1,58 +1,68 @@
-"""LangGraph orchestration: Planner -> Executor -> Triage -> (retry Executor | Reporter).
+"""LangGraph orchestration: Executor -> Triage -> (retry Executor | Reporter).
 
-    python orchestrator.py --changelog changelog.md --device emulator-5554
+    python orchestrator.py --device emulator-5554 --backend cloud
+    python orchestrator.py --suite tests/robot/smoke_settings.robot     # one suite instead of all
 """
 
 from __future__ import annotations
 
 import argparse
+import time
 from pathlib import Path
 from typing import Any, Callable, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from agents import executor_agent, planner_agent, reporter_agent, triage_agent
+from agents import executor_agent, recorder_agent, reporter_agent, triage_agent
 from agents.robot_mcp import core
 
 
 class State(TypedDict, total=False):
-    changelog: str
-    device: str | None
     suites: list[str]
+    device: str | None
+    started: float
     attempt: int
     retry: dict[str, list[str]]        # suite path -> test names to re-run
     history: dict[str, list[str]]      # test name -> statuses per attempt
     final: dict[str, dict]             # test name -> latest result
     classes: dict[str, str]
+    analysis: dict[str, dict]          # test name -> similar failures + LLM verdict
     report: str
+
+
+def all_suites(directory: str = "tests/robot") -> list[str]:
+    """Every suite except the `.rules.robot` baselines the recorder writes next to its output."""
+    return [s["path"] for s in core.list_suites(directory) if not s["path"].endswith(".rules.robot")]
 
 
 def build_graph(runner: Callable[..., dict[str, Any]] = core.run_suite,
                 store: triage_agent.FlakinessStore | None = None, max_retries: int = 1,
-                plan_fn: Callable[[str | None], list[str]] = planner_agent.plan):
+                llm_client=None):
     store = store or triage_agent.FlakinessStore()
 
-    def planner(state: State) -> State:
-        return {"suites": plan_fn(state.get("changelog")), "attempt": 0, "history": {}, "final": {},
-                "retry": {}}
-
     def executor(state: State) -> State:
+        attempt = state.get("attempt", 0)
+        history = {k: list(v) for k, v in state.get("history", {}).items()}
+        final = dict(state.get("final", {}))
         retry = state.get("retry") or {}
-        targets = retry or {s: None for s in state["suites"]}
-        history = {k: list(v) for k, v in state["history"].items()}
-        final = dict(state["final"])
+        targets = retry or {s: None for s in state.get("suites") or all_suites()}
         for suite, names in targets.items():
             result = executor_agent.execute(suite, state.get("device"), names, runner)
             if not result.get("tests"):   # runner failed before producing results
                 name = f"<{suite}>"
-                final[name] = {"status": "FAIL", "suite": suite, "message": result.get("error", "no output")}
+                final[name] = {"name": name, "status": "FAIL", "suite": suite,
+                               "message": result.get("error", "no output")}
                 history.setdefault(name, []).append("FAIL")
+                store.record(name, suite, "FAIL", final[name]["message"])
                 continue
             for t in result["tests"]:
                 history.setdefault(t["name"], []).append(t["status"])
                 final[t["name"]] = {**t, "suite": suite, "log": result.get("log")}
-                store.record(t["name"], suite, t["status"])
-        return {"history": history, "final": final, "attempt": state["attempt"] + 1}
+                step = t.get("failed_step") or {}
+                store.record(t["name"], suite, t["status"], t.get("message", ""),
+                             f"{step.get('keyword', '')} {' '.join(step.get('args', []))}".strip())
+        return {"history": history, "final": final, "attempt": attempt + 1, "retry": {},
+                "started": state.get("started") or time.time()}
 
     def triage(state: State) -> State:
         classes, retry = {}, {}
@@ -66,19 +76,29 @@ def build_graph(runner: Callable[..., dict[str, Any]] = core.run_suite,
                     continue
                 kind = triage_agent.REGRESSION
             classes[name] = kind
-        return {"classes": classes, "retry": retry}
+        if retry:   # classification is not final yet; analyze once the retries are done
+            return {"classes": classes, "retry": retry}
+        analysis = {}
+        for name, kind in classes.items():
+            test = state["final"][name]
+            similar = store.similar_failures(test.get("message", ""), before=state["started"])
+            analysis[name] = {"similar": similar}
+            if llm_client is not None:
+                analysis[name]["llm"] = triage_agent.analyze(
+                    {**test, "name": name}, kind, state["history"][name], similar,
+                    store.flake_rate(name), llm_client)
+        return {"classes": classes, "retry": {}, "analysis": analysis}
 
     def reporter(state: State) -> State:
         rates = {n: store.flake_rate(n) for n in state["final"]}
-        return {"report": reporter_agent.build_report(state["final"], state["classes"], rates)}
+        return {"report": reporter_agent.build_report(state["final"], state["classes"], rates,
+                                                      state.get("analysis"))}
 
     graph = StateGraph(State)
-    graph.add_node("planner", planner)
     graph.add_node("executor", executor)
     graph.add_node("triage", triage)
     graph.add_node("reporter", reporter)
-    graph.add_edge(START, "planner")
-    graph.add_edge("planner", "executor")
+    graph.add_edge(START, "executor")
     graph.add_edge("executor", "triage")
     graph.add_conditional_edges("triage", lambda s: "executor" if s.get("retry") else "reporter",
                                 {"executor": "executor", "reporter": "reporter"})
@@ -88,13 +108,17 @@ def build_graph(runner: Callable[..., dict[str, Any]] = core.run_suite,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="AgentQA multi-agent regression run")
-    parser.add_argument("--changelog", help="path to a changelog / requirements text file")
+    parser.add_argument("--suite", action="append", help="suite to run (repeatable); default: all in tests/robot")
     parser.add_argument("--device")
     parser.add_argument("--max-retries", type=int, default=1)
+    parser.add_argument("--backend", choices=["auto", "cloud", "local", "none"], default="auto",
+                        help="LLM for failure analysis: cloud=Claude, local=Ollama, none=no LLM, "
+                             "auto=cloud if ANTHROPIC_API_KEY is set")
     parser.add_argument("--out", default="results/report.md")
     args = parser.parse_args()
-    changelog = Path(args.changelog).read_text(encoding="utf-8") if args.changelog else ""
-    state = build_graph(max_retries=args.max_retries).invoke({"changelog": changelog, "device": args.device})
+    recorder_agent.load_dotenv()
+    graph = build_graph(max_retries=args.max_retries, llm_client=triage_agent.make_client(args.backend))
+    state = graph.invoke({"suites": args.suite or all_suites(), "device": args.device})
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(state["report"], encoding="utf-8")
     print(state["report"])

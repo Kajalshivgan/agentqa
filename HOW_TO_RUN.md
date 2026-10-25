@@ -47,7 +47,7 @@ There are two ways to end up with a runnable `.robot` file. Pick one.
 Skip to [Step 4](#4-run-the-test). Existing tests live in `tests/robot/` (e.g. `AAOS-101_display_brightness.robot`, `smoke_settings.robot`).
 
 ### Option B — Record a new flow from a test case
-`testcases/*.json` (Jira-style test cases, e.g. `AAOS-101_display_brightness.json`) are **not** auto-converted yet — there's no Planner Agent. Use the JSON's `testSteps` as your script and record yourself performing it:
+`testcases/*.json` (Jira-style test cases, e.g. `AAOS-101_display_brightness.json`) are **not** auto-converted yet. Use the JSON's `testSteps` as your script and record yourself performing it:
 
 ```powershell
 python -m agents.recorder_agent record --name AAOS-101_display_brightness
