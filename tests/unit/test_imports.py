@@ -4,9 +4,9 @@ import importlib
 
 import pytest
 
-MODULES = ["engine", "engine.MobileUILibrary", "agents.recorder.gestures", "agents.recorder.session",
+MODULES = ["engine", "engine.MobileUILibrary", "engine.speech", "engine.SpeechLibrary", "agents.recorder.gestures", "agents.recorder.session",
            "agents.recorder.generator", "agents.recorder.resolve", "agents.recorder.repair",
-           "agents.recorder_agent"]
+           "agents.recorder_agent", "agents.robot_mcp.core", "agents.robot_mcp.server"]
 
 
 @pytest.mark.parametrize("name", MODULES)

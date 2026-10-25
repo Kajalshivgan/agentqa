@@ -1,3 +1,6 @@
+
+
+
 *** Settings ***
 Documentation     Smoke test for Assert Image Visible / Tap On Image / Assert Screenshot Matches
 ...               on the AAOS emulator. Not part of the recorded-flow suite: exercises the new

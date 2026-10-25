@@ -8,6 +8,7 @@ log.html
 report.html
 *.png
 recordings/*.json
+recordings/speech/
 !recordings/examples/*.json
 # template/baseline images are part of the test suite, not run output
 !templates/*.png

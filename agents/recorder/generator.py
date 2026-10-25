@@ -2,7 +2,10 @@
 
 Two generators share one output contract:
   * rule_based - deterministic, offline, used as the baseline and fallback
-  * llm        - Claude (claude-sonnet-5) cleans up the flow: names, merged steps, assertions
+  * llm        - an LLM cleans up the flow: names, merged steps, assertions. Backend-agnostic:
+                 generate_with_llm() talks to whatever `client` it's given (anthropic.Anthropic()
+                 by default, or agents.recorder.ollama_client.OllamaClient for a fully offline
+                 local model) - see --backend in recorder_agent.py.
 Both results pass through `validate_robot` before being written.
 """
 

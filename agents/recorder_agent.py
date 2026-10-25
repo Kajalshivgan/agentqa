@@ -29,6 +29,8 @@ from engine.ui_tree import UITree  # noqa: E402
 from engine.image_match import find_template  # noqa: E402
 from agents.recorder.generator import (generate_rule_based, generate_with_llm,  # noqa: E402
                                        validate_robot)
+from agents.recorder.ollama_client import DEFAULT_MODEL as OLLAMA_DEFAULT_MODEL  # noqa: E402
+from agents.recorder.ollama_client import OllamaClient, OllamaConnectionError  # noqa: E402
 from agents.recorder.repair import needs_repair, repair_recording  # noqa: E402
 from agents.recorder.session import RecorderSession  # noqa: E402
 
@@ -68,7 +70,7 @@ def cmd_record(args) -> int:
     print(f"[recorder] {len(recording['actions'])} actions saved to {path.relative_to(ROOT)}")
     if not args.no_repair and not session.error and any(needs_repair(a) for a in recording["actions"]):
         _repair_and_save(recording, adb, path)
-    return _generate(recording, args.generator)
+    return _generate(recording, args.generator, args.backend)
 
 
 def _repair_and_save(recording: dict, adb: ADBClient, path: Path, everything: bool = False) -> None:
@@ -87,7 +89,7 @@ def _load(recording_path: str) -> dict:
 
 
 def cmd_generate(args) -> int:
-    return _generate(_load(args.recording), args.generator)
+    return _generate(_load(args.recording), args.generator, args.backend)
 
 
 def cmd_repair(args) -> int:
@@ -96,10 +98,10 @@ def cmd_repair(args) -> int:
         print("[repair] nothing to repair: every step already has a text/id locator")
     else:
         _repair_and_save(recording, ADBClient(args.device), Path(args.recording), everything=args.all)
-    return _generate(recording, args.generator)
+    return _generate(recording, args.generator, args.backend)
 
 
-def _generate(recording: dict, generator: str) -> int:
+def _generate(recording: dict, generator: str, backend: str = "cloud") -> int:
     name, actions = recording["name"], recording["actions"]
     start_package = recording.get("start_package")
     ROBOT_DIR.mkdir(parents=True, exist_ok=True)
@@ -109,28 +111,43 @@ def _generate(recording: dict, generator: str) -> int:
                generate_rule_based(actions, name, start_package))
 
     if generator in ("llm", "both"):
-        if not _has_credentials():
-            print("[generator] ANTHROPIC_API_KEY not set - skipping LLM generation (use --generator rules)")
-            return 0 if generator == "both" else 1
-        import anthropic
-
         t0 = time.monotonic()
-        try:
-            suite = generate_with_llm(actions, name, start_package)
-        except anthropic.APIStatusError as e:
-            message = e.body.get("error", {}).get("message") if isinstance(e.body, dict) else str(e)
-            print(f"[generator] Claude API error ({e.status_code}): {message}")
-            if "workspace" in str(message):
-                print("[generator] fix: use an API key created inside a workspace, or add "
-                      "ANTHROPIC_WORKSPACE_ID=<workspace id> to .env")
-            return 1
-        except anthropic.APIConnectionError as e:
-            print(f"[generator] could not reach the Claude API: {e}")
-            return 1
-        except ValueError as e:  # output failed validation twice
-            print(f"[generator] {e}")
-            return 1
-        print(f"[generator] Claude generated the suite in {time.monotonic() - t0:.1f}s")
+        if backend == "local":
+            model_name = os.environ.get("OLLAMA_MODEL", OLLAMA_DEFAULT_MODEL)
+            client = OllamaClient(model=model_name, host=os.environ.get("OLLAMA_HOST"))
+            try:
+                suite = generate_with_llm(actions, name, start_package, client=client)
+            except OllamaConnectionError as e:
+                print(f"[generator] {e}")
+                return 1
+            except ValueError as e:  # output failed validation twice
+                print(f"[generator] {e}")
+                return 1
+            print(f"[generator] {model_name} (local) generated the suite in "
+                  f"{time.monotonic() - t0:.1f}s")
+        else:
+            if not _has_credentials():
+                print("[generator] ANTHROPIC_API_KEY not set - skipping LLM generation "
+                      "(use --generator rules or --backend local)")
+                return 0 if generator == "both" else 1
+            import anthropic
+
+            try:
+                suite = generate_with_llm(actions, name, start_package)
+            except anthropic.APIStatusError as e:
+                message = e.body.get("error", {}).get("message") if isinstance(e.body, dict) else str(e)
+                print(f"[generator] Claude API error ({e.status_code}): {message}")
+                if "workspace" in str(message):
+                    print("[generator] fix: use an API key created inside a workspace, or add "
+                          "ANTHROPIC_WORKSPACE_ID=<workspace id> to .env")
+                return 1
+            except anthropic.APIConnectionError as e:
+                print(f"[generator] could not reach the Claude API: {e}")
+                return 1
+            except ValueError as e:  # output failed validation twice
+                print(f"[generator] {e}")
+                return 1
+            print(f"[generator] Claude generated the suite in {time.monotonic() - t0:.1f}s")
         _write(ROBOT_DIR / f"{name}.robot", suite)
     return 0
 
@@ -276,6 +293,9 @@ def main(argv=None) -> int:
     r.add_argument("--device", help="adb serial (default: the only connected device)")
     r.add_argument("--duration", type=float, help="stop automatically after N seconds")
     r.add_argument("--generator", choices=["llm", "rules", "both"], default="both")
+    r.add_argument("--backend", choices=["cloud", "local"], default="cloud",
+                   help="cloud=Claude API (needs ANTHROPIC_API_KEY); "
+                        f"local=Ollama (needs `ollama serve`, default model {OLLAMA_DEFAULT_MODEL})")
     r.add_argument("--no-repair", action="store_true",
                    help="skip the automatic replay that replaces coordinate steps with text/id locators")
     r.set_defaults(func=cmd_record)
@@ -287,11 +307,15 @@ def main(argv=None) -> int:
     rp.add_argument("--all", action="store_true",
                     help="re-resolve every step with the current rules (upgrade an older recording)")
     rp.add_argument("--generator", choices=["llm", "rules", "both"], default="both")
+    rp.add_argument("--backend", choices=["cloud", "local"], default="cloud")
     rp.set_defaults(func=cmd_repair)
 
     g = sub.add_parser("generate", help="(re)generate a .robot test from a saved recording")
     g.add_argument("--recording", required=True)
     g.add_argument("--generator", choices=["llm", "rules", "both"], default="both")
+    g.add_argument("--backend", choices=["cloud", "local"], default="cloud",
+                   help="cloud=Claude API (needs ANTHROPIC_API_KEY); "
+                        f"local=Ollama (needs `ollama serve`, default model {OLLAMA_DEFAULT_MODEL})")
     g.set_defaults(func=cmd_generate)
 
     i = sub.add_parser("inspect", help="print the current UI hierarchy")

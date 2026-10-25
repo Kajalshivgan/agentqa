@@ -71,7 +71,22 @@ This produces:
 | `--device DEVICE` | adb serial (default: the only connected device) |
 | `--duration N` | stop automatically after N seconds |
 | `--generator {llm,rules,both}` | which generator(s) to run (default `both`) |
+| `--backend {cloud,local}` | which LLM the `llm` generator talks to (default `cloud`) — see below |
 | `--no-repair` | skip the automatic locator-repair replay |
+
+**Cloud vs. local LLM backend (`--backend`):** both `record` and `generate` accept this flag.
+- `cloud` (default) — Claude API, needs `ANTHROPIC_API_KEY` in `.env`. Highest quality; costs ~$0.01–0.02/test.
+- `local` — a fully offline Ollama model, zero per-use cost. One-time setup:
+  ```powershell
+  # install Ollama (https://ollama.com), then:
+  ollama pull qwen2.5-coder:7b   # or :3b / :14b - see README's System Requirements table
+  ollama serve                   # leave running in its own terminal
+  ```
+  Then generate with:
+  ```powershell
+  python -m agents.recorder_agent generate --recording recordings/AAOS-101_display_brightness.json --generator llm --backend local
+  ```
+  Override the model/host with env vars if needed: `OLLAMA_MODEL` (default `qwen2.5-coder:7b`), `OLLAMA_HOST` (default `http://localhost:11434`). The same prompt, keyword whitelist, and `validate_robot()` retry loop run either way — only which model answers changes. Expect more validation retries and weaker assertion choices from a small local model than from Claude; see the README's Roadmap/notes on this tradeoff.
 
 **Regenerate** a `.robot` file from an existing recording (e.g. after editing `generator.py`, or to try a different `--generator`) without re-recording:
 ```powershell
@@ -142,6 +157,22 @@ Every run must pass.
 
 ---
 
+## 7. Use the tests from an AI agent (MCP server)
+
+```powershell
+pip install -r requirements.txt          # includes the `mcp` package
+python -m agents.robot_mcp               # stdio server; normally started by the MCP client, not by hand
+```
+
+- **VS Code Copilot agent mode:** open the project folder; `.vscode/mcp.json` registers the `agentqa-robot` server. Start it from the MCP view (or the "Start" link above the entry in `mcp.json`), then pick its tools in agent mode.
+- **Claude Desktop / Claude Code:** see "MCP Server" in [README.md](README.md) for the config.
+
+Runs started through the server land in `results/mcp/<run_id>/` (log.html, report.html, screenshots). Suites written by an agent land in `tests/robot/generated/` and are dry-run validated first.
+
+Check it without a client: `pytest tests/unit/test_robot_mcp.py`.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -151,4 +182,5 @@ Every run must pass.
 | Emulator stuck `offline` / "Not Responding" | `emulator -avd Automotive_1408p_landscape -gpu swiftshader_indirect -no-snapshot` |
 | More than one `adb` installed, device stuck `offline` | Use the Android SDK's copy (`<sdk>/platform-tools`); the engine prefers it automatically |
 | `robot` fails: `unknown encoding: utf-8:surrogateescape` | `Remove-Item Env:PYTHONIOENCODING` (or `unset PYTHONIOENCODING`), then rerun |
+| MCP tool returns `ADBError: adb not found` / no devices | Start the emulator (step 2) and check `adb devices`; set `ANDROID_HOME` if adb isn't on PATH |
 | `ModuleNotFoundError: No module named 'cv2'` | The venv isn't activated / `pip install -r requirements.txt` wasn't run in it — activate `.venv` first |

@@ -4,6 +4,17 @@
 
 **Status:** Phase 1 (core engine + Recorder Agent, Approach A) is implemented and verified on an Android Automotive OS emulator. The Planner, Executor, Triage and Reporter agents are next. See the [Roadmap](#roadmap).
 
+## Highlights
+
+**Stack:** Python, Robot Framework, ADB, OpenCV, Claude API, MCP, LangGraph
+
+- **MCP server** exposing Robot Framework to AI agents for keyword discovery, test authoring, validation and execution *(implemented, see [MCP Server](#mcp-server-robot-framework-for-ai-agents))*
+- **ADB / UIAutomator automation engine** packaged as a Robot Framework library, with OpenCV image checks (template matching, visual regression) *(implemented)*
+- **Claude-powered Recorder Agent** that converts manual device flows into validated Robot Framework tests, with a rule-based fallback and an optional local LLM via Ollama *(implemented)*
+- **Speech-driven tests**: text-to-speech played to the device, verified with the same keywords *(library done, phone run pending)*
+- **SOME/IP integration** (COVESA vsomeip) so a single Robot test drives both the HMI and the ECU *(planned)*
+- **LangGraph multi-agent orchestration** (Planner, Executor, Triage, Reporter) for automated failure classification *(in design)*
+
 ---
 
 ## Table of Contents
@@ -13,7 +24,9 @@
 - [System Architecture](#system-architecture)
 - [Core Automation Engine](#core-automation-engine)
 - [Recorder Agent: Auto-Generating Test Cases from Live Device Interaction](#recorder-agent-auto-generating-test-cases-from-live-device-interaction)
+- [Speech Testing (Proof of Concept)](#speech-testing-proof-of-concept)
 - [Multi-Agent Orchestration Layer](#multi-agent-orchestration-layer)
+- [MCP Server: Robot Framework for AI Agents](#mcp-server-robot-framework-for-ai-agents)
 - [Tech Stack](#tech-stack)
 - [System Requirements](#system-requirements)
 - [Project Structure](#project-structure)
@@ -255,6 +268,68 @@ Both outputs pass through `validate_robot()`. It parses the file with Robot Fram
 
 ---
 
+## Speech Testing (Proof of Concept)
+
+> **Status: library implemented and unit-tested; synthesis and playback verified on the PC. The phone run (microphone to assistant) is not yet verified.**
+
+Some test cases are voice-driven, for example *"Hey Google, open weather"*. The idea is to turn the phrase into audio on the PC, play it so the device hears it through its microphone, and let the existing keywords verify the result, exactly as in any other `.robot` test.
+
+```mermaid
+flowchart LR
+    A[Robot keyword: Speak 'Hey Google open weather'] --> B[edge-tts: text to speech]
+    B --> C[(Cached .wav)]
+    C --> D[Play on PC default speaker]
+    D -->|acoustic, 10-30 cm| E[Phone microphone]
+    E --> F[Assistant opens Weather]
+    F --> G[Existing verification: Assert Visible / Assert Image Visible]
+```
+
+### Scope of the first proof of concept
+
+| Decision | Choice |
+|---|---|
+| Device under test | An Android phone connected over ADB (real automotive hardware comes later) |
+| Language | English only |
+| TTS engine | [`edge-tts`](https://pypi.org/project/edge-tts/): free, no API key, neural voices, needs internet (available) |
+| Audio output | The PC's default speaker, placed 10-30 cm from the phone's microphone, in a quiet room |
+| Caching | Generated WAVs are cached by hash of text, voice and rate, so each phrase is synthesized once |
+
+### Keywords (`engine/SpeechLibrary.py`, logic in `engine/speech.py`)
+
+```robotframework
+*** Settings ***
+Library    engine.MobileUILibrary
+Library    engine.SpeechLibrary
+
+*** Test Cases ***
+Open Weather By Voice
+    Speak                     Hey Google, open weather
+    Wait Until Screen Is Stable
+    Assert Visible            Weather
+```
+
+| Keyword | Purpose |
+|---|---|
+| `Speak    <text>` | Synthesize (or reuse the cached WAV) and play it on the configured output device |
+| `Launch Assistant By ADB` | `adb shell input keyevent KEYCODE_VOICE_ASSIST`: opens the assistant without the hotword, for a more reliable run |
+| `Speak Command    <text>` | `Launch Assistant By ADB` followed by `Speak`, for the command only ("open weather") |
+| `Pre Generate Speech    <text> ...` | Cache phrases without playing them, so a later run needs no internet |
+
+Settings go in `.env`: `SPEECH_VOICE` (e.g. `en-US-AriaNeural`), `SPEECH_RATE`, `SPEECH_VOLUME`, `SPEECH_OUTPUT_DEVICE` (empty = PC default). Dependencies (in `requirements.txt`): `edge-tts`, `sounddevice`, `soundfile`. Generated audio is cached in `recordings/speech/` (git-ignored). A working example is `tests/robot/speech_open_weather.robot`; `SPEECH_OUTPUT_DEVICE` accepts a device index or a name fragment, e.g. `Realtek`.
+
+### Known risks
+
+- **Voice Match.** On a phone, "Hey Google" is usually trained on the owner's voice and may reject synthetic speech. Mitigations: switch Voice Match off if the device allows it, try other neural voices or rates, or skip the hotword with `Launch Assistant By ADB`. The full hotword phrase is then a separate, lower-confidence check. Whether the phone uses Google Assistant or Gemini changes which path works.
+- **Acoustic path is noisy.** Background sound and speaker distance cause failures. Calibrate the volume once and keep the setup fixed.
+- **Timing.** The assistant needs a moment before it listens, so a short wait follows the hotword.
+- **Internet.** `edge-tts` is an unofficial service. It is fine for internal testing, and the cache means reruns work offline.
+
+### Later: real automotive hardware
+
+For a head unit, the speaker-to-mic gap can be replaced by a wired path: a USB audio adapter into the unit's microphone or aux input, **through an attenuator** (line level is far too loud for a mic input). For the Android Automotive emulator, a virtual audio cable (e.g. VB-Cable) routes the audio digitally with no hardware. The keywords stay the same, and only `SPEECH_OUTPUT_DEVICE` changes.
+
+---
+
 ## Multi-Agent Orchestration Layer
 
 | Agent | Status | Role | Key Inputs | Key Outputs |
@@ -269,11 +344,82 @@ The agents will be orchestrated as a **LangGraph** state machine, which gives ex
 
 ---
 
+## MCP Server: Robot Framework for AI Agents
+
+`agents/robot_mcp` exposes the engine and the Robot Framework suites as a **Model Context Protocol (MCP)** server, so any MCP client (Claude Desktop, Claude Code, VS Code Copilot agent mode) can discover keywords, author tests, run them and read the results, without custom glue code per agent. It is also the interface the Planner, Executor and Triage agents will use.
+
+```mermaid
+flowchart LR
+    A[MCP client: Claude / Copilot agent] -->|stdio, JSON-RPC| B[agents.robot_mcp server]
+    B --> C[list_keywords / list_suites]
+    B --> D[validate_suite / write_suite]
+    B --> E[run_suite / get_run_result]
+    B --> F[inspect_screen / run_keyword]
+    D -->|robot --dryrun| G[Robot Framework]
+    E -->|robot| G
+    G --> H[MobileUILibrary]
+    F --> H
+    H -->|ADB + UIAutomator| I[Device / AAOS emulator]
+```
+
+| Tool | What it does |
+|---|---|
+| `list_suites` | `.robot` files with documentation, test names and tags |
+| `list_keywords` | Keywords of `MobileUILibrary`, `SpeechLibrary` or `BuiltIn`, with arguments and docs |
+| `list_devices` | Devices/emulators visible to ADB |
+| `validate_suite` | Dry run (syntax, keyword names, argument counts) without a device |
+| `write_suite` | Saves a suite to `tests/robot/generated/`, **only if its dry run passes** |
+| `run_suite` | Runs a suite or folder (test/tag filters, variables, device) and returns per-test status, failure message and the deepest failing keyword |
+| `list_runs` / `get_run_result` | Earlier runs; `log.html`, `report.html` and screenshots stay under `results/mcp/<run_id>/` |
+| `inspect_screen` | Current screen as elements with text, content-desc, resource-id and bounds (ready-made locators) |
+| `run_keyword` | Executes one `MobileUILibrary` keyword live, so an agent can try a step before writing it into a test |
+
+**Guardrails:** paths are resolved inside the project (no `../` escapes), agents can only *write* under `tests/robot/generated/`, only the three listed libraries can be loaded, and bad requests or device problems (no emulator, adb missing) come back as `{"error": ...}` the agent can act on. Robot runs in a subprocess with captured output, so nothing corrupts the stdio protocol.
+
+**Start it** (from the project root, with the venv active):
+```powershell
+python -m agents.robot_mcp
+```
+
+**VS Code (Copilot agent mode)** — `.vscode/mcp.json` is included:
+```json
+{
+  "servers": {
+    "agentqa-robot": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": ["-m", "agents.robot_mcp"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+**Claude Desktop** — add to `claude_desktop_config.json` (adjust the path):
+```json
+{
+  "mcpServers": {
+    "agentqa-robot": {
+      "command": "E:\\LNT\\portfolio\\project_1\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "agents.robot_mcp"],
+      "env": { "PYTHONPATH": "E:\\LNT\\portfolio\\project_1" }
+    }
+  }
+}
+```
+
+**Claude Code:** `claude mcp add agentqa-robot -- python -m agents.robot_mcp` (run from the project root).
+
+Example prompt once connected: *"Start Settings on the emulator, find the Display page, write a test that checks Brightness level is shown, validate it and run it."*
+
+---
+
 ## Tech Stack
 
 - **Automation engine:** Python 3.10+, ADB, Android UIAutomator (via `uiautomator dump`)
 - **Test authoring:** Robot Framework 7
 - **AI orchestration:** LangGraph
+- **Agent tool interface:** Model Context Protocol (MCP) server over stdio (`mcp` Python SDK)
 - **LLM:** Claude (`claude-sonnet-5`) via the official `anthropic` Python SDK
 - **Target environment:** Android Automotive OS emulator (Android Studio SDK), or any Android-based industrial touchscreen device with ADB access
 - **Reporting:** Robot Framework's native `log.html` / `report.html`, plus agent-generated summaries
@@ -325,6 +471,8 @@ project_1/
 │   ├── ui_tree.py             # UIAutomator XML parser + element / point locator
 │   ├── wait.py                # Polling / retry logic
 │   ├── image_match.py         # Template matching + visual-regression diffing
+│   ├── speech.py              # edge-tts synthesis + cache, audio playback
+│   ├── SpeechLibrary.py       # Robot Framework keywords: Speak, Speak Command, ...
 │   └── MobileUILibrary.py     # Robot Framework keyword library
 ├── agents/
 │   ├── recorder/
@@ -469,7 +617,10 @@ It records the scripted flow in `tools/simulate_user.py`, generates a test, and 
 - [x] Core engine: ADB client, UI tree, wait logic, Robot Framework keyword library
 - [x] Recorder Agent — Approach A (raw touch capture via `getevent`, pre-touch snapshots, rule-based + Claude generation)
 - [x] Image verification: template matching (`Assert Image Visible` / `Tap On Image`) and visual regression (`Assert Screenshot Matches`), backed by OpenCV + Pillow
+- [x] MCP server exposing Robot Framework (discover, validate, write, run, inspect) to AI agents
+- [~] Speech testing proof of concept (library done; phone run pending): `SpeechLibrary` (edge-tts + PC speaker) on an Android phone, English only; later a wired path to real automotive hardware
 - [ ] Planner, Executor, Triage, Reporter agents wired with LangGraph
+- [ ] SOME/IP integration (COVESA vsomeip): Robot keywords that send/receive ECU messages, so one test drives the HMI and the ECU
 - [ ] Flakiness-history database (SQLite) feeding the Triage Agent
 - [ ] Benchmark v1 vs v2 latency and fill in the table above
 - [ ] Recorder Agent — Approach B (companion Accessibility Service, Android Studio / Kotlin)
